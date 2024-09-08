@@ -186,7 +186,7 @@ import * as tf from "@tensorflow/tfjs";
 import Navbar from "./Navbar";
 import ImageBox from "./ImageBox";
 import Footer from "./Footer";
-import AIGeneratedBox from "./AiGeneratedBox";
+// import AIGeneratedBox from "./AiGeneratedBox";
 import Loader from "./Loader";
 import Feedback from "./Feedback";
 import { Link } from "react-router-dom";
@@ -370,7 +370,7 @@ const PlantDiseasePredictor = () => {
 
               {/* AI Generated Box */}
               <div className="bg-[#73e864] p-4 mt-6 md:mt-0 rounded-lg md:w-1/3">
-                <AIGeneratedBox CropStatus={plantstate[prediction]} />
+                {/* <AIGeneratedBox CropStatus={plantstate[prediction]} /> */}
               </div>
             </div>
           </div>
