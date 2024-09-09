@@ -4,7 +4,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const AIGeneratedBox = ({CropStatus}) => {
 
 
-    const [aiData, setAiData] = useState(""); // State to hold AI generated data
+    const [aiData, setAiData] = useState(""); 
     const [loading, setLoading] = useState(false);
 
     let apiKey = "AIzaSyD-rwPq8xV2XktuVdDsFlhZC34T5GILr3s";

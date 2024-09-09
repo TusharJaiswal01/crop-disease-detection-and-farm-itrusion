@@ -71,7 +71,7 @@ const ObjectDetection = () => {
       </h1>
 
       <div className="flex flex-wrap justify-center gap-4 mx-auto mb-6 w-full md:w-2/3">
-        {/* Responsive icon images */}
+        
         <img
           className="h-16 w-16 sm:h-20 sm:w-20"
           src="https://cdn-icons-png.freepik.com/256/4921/4921732.png"

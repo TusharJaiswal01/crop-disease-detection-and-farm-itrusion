@@ -186,17 +186,19 @@ import * as tf from "@tensorflow/tfjs";
 import Navbar from "./Navbar";
 import ImageBox from "./ImageBox";
 import Footer from "./Footer";
-import AIGeneratedBox from "./AiGeneratedBox";
+// import AIGeneratedBox from "./AiGeneratedBox";
 import Loader from "./Loader";
 import Feedback from "./Feedback";
 import { Link } from "react-router-dom";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const PlantDiseasePredictor = () => {
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
   const [filepath, setFilepath] = useState(null);
+  const [aiData, setAiData] = useState("");
 
-  // Load saved prediction from localStorage on component mount
+
   useEffect(() => {
     const savedPrediction = localStorage.getItem("plantPrediction");
     const savedFilepath = localStorage.getItem("plantImage");
@@ -210,28 +212,28 @@ const PlantDiseasePredictor = () => {
     }
   }, []);
 
-  // Function to handle image upload and prediction
+
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
     const fileURL = URL.createObjectURL(event.target.files[0]);
     setFilepath(fileURL);
-    localStorage.setItem("plantImage", fileURL); // Save image filepath in localStorage
+    localStorage.setItem("plantImage", fileURL);
 
     setLoading(true);
 
     try {
-      // Load the TensorFlow.js model from the local server
+
       const model = await tf.loadLayersModel(
         "https://sanskarjain04.github.io/Disease-Prediction/model.json"
       );
 
-      // Read and preprocess the image
+
       const image = await loadImage(file);
       const processedImage = preprocessImage(image);
 
-      // Make the prediction
+
       const predictions = model.predict(processedImage);
       const predictedClass = predictions.argMax(-1).dataSync()[0];
 
@@ -311,6 +313,55 @@ const PlantDiseasePredictor = () => {
     "Tomato___healthy",
   ];
 
+  let apiKey = "AIzaSyD-rwPq8xV2XktuVdDsFlhZC34T5GILr3s";
+  const modelType = "gemini-1.5-flash";
+  const promptText = `Explain in not more than 200 words, What is a ${plantstate[prediction]} Crop or Plant Condition and mention in points What are the measures we can take for a healthy crop? Give the information in bullet points.`;
+
+
+  const gemini_stream = async (params) => {
+    try {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: modelType });
+      const result = await model.generateContentStream(params.userInput);
+
+      let text = "";
+      let offset = 0;
+      for await (const chunk of result.stream) {
+        const chunkText = chunk.text();
+        text += chunkText;
+        if (chunkText.length > offset) {
+          await params.streamMessage(text);
+          offset = chunkText.length;
+          await new Promise(resolve => setTimeout(resolve, 30));
+        }
+      }
+      await params.streamMessage(text);
+    } catch (error) {
+      await params.injectMessage("Unable to load model, is your API Key valid?");
+    }
+  }
+
+  const handleGenerate = async () => {
+    setLoading(true);
+    setAiData(""); // Clear previous AI data
+    if (!plantstate[prediction]) {
+      setAiData("First Enter the Image for Disease Identification");
+      return setLoading(false);
+    }
+    try {
+      const params = {
+        userInput: promptText,
+        streamMessage: async (message) => setAiData(prev => prev + message),
+        injectMessage: async (message) => setAiData(message)
+      };
+      await gemini_stream(params);
+    } catch (error) {
+      console.error('Error generating data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <div className="w-full h-full bg-[#c7f58c]">
@@ -370,7 +421,23 @@ const PlantDiseasePredictor = () => {
 
               {/* AI Generated Box */}
               <div className="bg-[#73e864] p-4 mt-6 md:mt-0 rounded-lg md:w-1/3">
-                <AIGeneratedBox CropStatus={plantstate[prediction]} />
+                <div className=" flex flex-col justify-center h-80 align-middle items-center container mx-auto px-4">
+                  <img className=" h-16 w-16" src="https://cdn-icons-png.freepik.com/256/6583/6583648.png?ga=GA1.1.2115079256.1724344357&semt=ais_hybrid" alt="" />
+                  <button
+                    onClick={handleGenerate}
+                    className="px-4 py-2 rounded-full bg-gradient-to-r from-green-800 via-green-600 to-green-900 text-white mb-4"
+                    disabled={loading}
+                  >
+                    {loading ? 'Generating...' : 'Generate AI Data'}
+                  </button>
+
+                  {aiData && (
+                    <div className="border p-4 rounded-md shadow-md bg-[#fdff8a] max-w-96 overflow-y-auto">
+                      <h2 className="text-xl font-semibold mb-2">Generated Data:</h2>
+                      <p>{aiData}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
